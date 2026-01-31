@@ -25,9 +25,9 @@ Examples:
 			envName = args[0]
 		}
 
-		identity, err := keyfile.ReadIdentity(keyfile.DefaultKeyFile)
+		identity, err := keyfile.LoadIdentity()
 		if err != nil {
-			return fmt.Errorf("failed to read key file: %w", err)
+			return err
 		}
 
 		f, err := secrets.Load(secrets.DefaultFile)

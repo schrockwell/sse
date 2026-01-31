@@ -11,6 +11,7 @@ import (
 )
 
 const DefaultKeyFile = "master.key"
+const MasterKeyEnvVar = "SSE_MASTER_KEY"
 
 // Generate creates a new age X25519 identity and writes it to the specified file.
 func Generate(path string, force bool) error {
@@ -99,4 +100,28 @@ func ReadRecipient(path string) (*age.X25519Recipient, error) {
 func ReadIdentity(path string) (*age.X25519Identity, error) {
 	identity, _, err := Read(path)
 	return identity, err
+}
+
+// LoadIdentity loads the identity from SSE_MASTER_KEY env var, or falls back to the default key file.
+func LoadIdentity() (*age.X25519Identity, error) {
+	if key := os.Getenv(MasterKeyEnvVar); key != "" {
+		identity, err := age.ParseX25519Identity(key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %s: %w", MasterKeyEnvVar, err)
+		}
+		return identity, nil
+	}
+	return ReadIdentity(DefaultKeyFile)
+}
+
+// LoadRecipient loads the recipient (public key) from SSE_MASTER_KEY env var, or falls back to the default key file.
+func LoadRecipient() (*age.X25519Recipient, error) {
+	if key := os.Getenv(MasterKeyEnvVar); key != "" {
+		identity, err := age.ParseX25519Identity(key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse %s: %w", MasterKeyEnvVar, err)
+		}
+		return identity.Recipient(), nil
+	}
+	return ReadRecipient(DefaultKeyFile)
 }

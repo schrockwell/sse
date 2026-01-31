@@ -24,9 +24,9 @@ Examples:
   sse edit`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		identity, err := keyfile.ReadIdentity(keyfile.DefaultKeyFile)
+		identity, err := keyfile.LoadIdentity()
 		if err != nil {
-			return fmt.Errorf("failed to read key file: %w", err)
+			return err
 		}
 		recipient := identity.Recipient()
 
