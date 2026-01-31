@@ -1,4 +1,4 @@
-# SSE - Stupidly Simple Environments
+# SSE - Stupidly-Simple Environments
 
 [![Test](https://github.com/schrockwell/sse/actions/workflows/test.yml/badge.svg)](https://github.com/schrockwell/sse/actions/workflows/test.yml)
 
@@ -72,6 +72,31 @@ kamal app exec "sse with production -- /app/bin/migrate"
 env:
   secret:
     - SSE_MASTER_KEY
+```
+
+## `sse analyze`
+
+If you're tired of squinting at random base-64 strings to see if your environment variables are consistent across environments, try `sse analyze`.
+
+```
+$ sse analyze
+Missing keys:
+  DATABASE_URL is not set in: development
+
+Equal values:
+  AWS_HOST is equal in: development, production
+  AWS_REGION is equal in: development, production
+  GEOCODING_API_KEY is equal in: development, production
+  PUSHOVER_APP_TOKEN is equal in: development, production
+  PUSHOVER_USER_KEY is equal in: development, production
+
+Unique values:
+  ADMIN_PASSWORD
+  AWS_ACCESS_KEY_ID
+  AWS_SECRET_ACCESS_KEY
+  S3_ASSET_HOST
+  S3_BUCKET
+  SECRET_KEY_BASE
 ```
 
 ## Available Commands
