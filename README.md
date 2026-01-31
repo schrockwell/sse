@@ -10,17 +10,67 @@ SSE draws inspiration from [Rails credentials](https://thoughtbot.com/blog/switc
 
 It's a single-file executable with no external dependencies, so it's easy to integrate with development, build, and deployment environments.
 
-## More Details
+## Installation
+
+Download [the latest release](https://github.com/schrockwell/sse/releases/latest) and place the binary somewhere accessible by your `PATH`, probably `/usr/local/bin`.
+
+## Using SSE_MASTER_KEY
 
 The `SSE_MASTER_KEY` environment variable takes precedence over the `master.key` file for decryption operations. This is useful for CI/CD environments where you may not want to store the `master.key` file directly.
 
-## Example - Local Development
+Only the private key is needed for decryption, so for deployments you can set `SSE_MASTER_KEY=$(sse private)`.
 
-todo
+## Example: Local Development with Direnv
 
-## Example - Docker
+#### .envrc
 
-todo
+```sh
+eval "$(sse load)"
+```
+
+## Example: Docker Deployment with Kamal
+
+#### Dockerfile
+
+```Dockerfile
+ENV SSE_VERSION=0.1.1
+RUN wget "https://github.com/schrockwell/sse/releases/download/v${SSE_VERSION}/sse-linux-amd64.tar.gz" -O /tmp/sse.tar.gz && \
+    tar -xzf /tmp/sse.tar.gz -C /usr/local/bin/ && \
+    rm /tmp/sse.tar.gz
+COPY env.toml ./
+
+ENTRYPOINT ["/app/bin/entrypoint"]
+CMD ["/app/bin/server"]
+```
+
+#### bin/entrypoint
+
+```bash
+#! /bin/bash
+eval "$(sse load production)"
+exec "$@"
+```
+
+#### .kamal/secrets
+
+```
+SSE_MASTER_KEY="$(sse private)"
+```
+
+#### .kamal/hooks/pre-deploy (example)
+
+```bash
+#! /bin/bash
+kamal app exec "sse with production -- /app/bin/migrate"
+```
+
+#### config/deploy.yml
+
+```yaml
+env:
+  secret:
+    - SSE_MASTER_KEY
+```
 
 ## Available Commands
 
