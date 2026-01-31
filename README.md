@@ -1,5 +1,7 @@
 # SSE - Stupidly Simple Environments
 
+![Animated SSE demo](https://cdn.schrockwell.com/sse/readme.gif)
+
 SSE is a highly-opinionated, platform-agnostic tool for managing secret environment variables.
 
 Secrets are saved in an encrypted TOML file that is safe to check into version control. Only the `master.key` file is required to decrypt and edit it. Multiple environments are supported; `development` is the default.
