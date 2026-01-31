@@ -102,10 +102,48 @@ func ReadIdentity(path string) (*age.X25519Identity, error) {
 	return identity, err
 }
 
+// parseKeyData parses the master.key file format from a string.
+func parseKeyData(data string) (*age.X25519Identity, *age.X25519Recipient, error) {
+	var identity *age.X25519Identity
+	var recipient *age.X25519Recipient
+
+	for _, line := range strings.Split(data, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			if strings.HasPrefix(line, "# public key: ") {
+				pubKey := strings.TrimPrefix(line, "# public key: ")
+				r, err := age.ParseX25519Recipient(pubKey)
+				if err == nil {
+					recipient = r
+				}
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, "AGE-SECRET-KEY-") {
+			id, err := age.ParseX25519Identity(line)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to parse secret key: %w", err)
+			}
+			identity = id
+			if recipient == nil {
+				recipient = identity.Recipient()
+			}
+			break
+		}
+	}
+
+	if identity == nil {
+		return nil, nil, fmt.Errorf("no secret key found")
+	}
+
+	return identity, recipient, nil
+}
+
 // LoadIdentity loads the identity from SSE_MASTER_KEY env var, or falls back to the default key file.
 func LoadIdentity() (*age.X25519Identity, error) {
 	if key := os.Getenv(MasterKeyEnvVar); key != "" {
-		identity, err := age.ParseX25519Identity(key)
+		identity, _, err := parseKeyData(key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %s: %w", MasterKeyEnvVar, err)
 		}
@@ -117,11 +155,11 @@ func LoadIdentity() (*age.X25519Identity, error) {
 // LoadRecipient loads the recipient (public key) from SSE_MASTER_KEY env var, or falls back to the default key file.
 func LoadRecipient() (*age.X25519Recipient, error) {
 	if key := os.Getenv(MasterKeyEnvVar); key != "" {
-		identity, err := age.ParseX25519Identity(key)
+		_, recipient, err := parseKeyData(key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse %s: %w", MasterKeyEnvVar, err)
 		}
-		return identity.Recipient(), nil
+		return recipient, nil
 	}
 	return ReadRecipient(DefaultKeyFile)
 }
