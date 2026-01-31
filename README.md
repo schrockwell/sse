@@ -1,5 +1,7 @@
 # SSE - Stupidly Simple Environments
 
+[![Test](https://github.com/schrockwell/sse/actions/workflows/test.yml/badge.svg)](https://github.com/schrockwell/sse/actions/workflows/test.yml)
+
 ![Animated SSE demo](https://cdn.schrockwell.com/sse/readme.gif)
 
 SSE is a highly-opinionated, platform-agnostic tool for managing secret environment variables.

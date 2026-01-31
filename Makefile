@@ -1,4 +1,4 @@
-.PHONY: build clean install all
+.PHONY: build clean install all test
 
 BUILD_DIR := bin
 BINARY := sse
@@ -6,6 +6,9 @@ VERSION := $(shell grep 'var Version' cmd/root.go | cut -d'"' -f2)
 
 build:
 	go build -o $(BUILD_DIR)/$(BINARY) .
+
+test:
+	go test -v -race ./...
 
 clean:
 	rm -rf $(BUILD_DIR)
