@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build all platforms
+        run: make all
+
+      - name: Create archives
+        run: |
+          cd bin
+          for dir in */; do
+            name="${dir%/}"
+            if [[ "$name" == *"windows"* ]]; then
+              zip -j "../sse-${name}.zip" "$dir"*
+            else
+              tar -czvf "../sse-${name}.tar.gz" -C "$dir" .
+            fi
+          done
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            sse-*.tar.gz
+            sse-*.zip
+          generate_release_notes: true
