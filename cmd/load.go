@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/schrockwell/sse/internal/keyfile"
 	"github.com/schrockwell/sse/internal/secrets"
@@ -53,7 +54,9 @@ Examples:
 		sort.Strings(keys)
 
 		for _, key := range keys {
-			fmt.Printf("export %s=%q\n", key, decrypted[key])
+			// Use single quotes to prevent shell expansion, escape embedded single quotes
+			escaped := strings.ReplaceAll(decrypted[key], "'", "'\"'\"'")
+			fmt.Printf("export %s='%s'\n", key, escaped)
 		}
 
 		return nil
