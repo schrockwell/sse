@@ -310,6 +310,70 @@ func TestToEnvList(t *testing.T) {
 	}
 }
 
+func TestStableReencryption(t *testing.T) {
+	identity := generateTestIdentity(t)
+	recipient := identity.Recipient()
+
+	// Simulate the edit flow: encrypt → decrypt → re-encrypt unchanged values
+	original := map[string]string{
+		"UNCHANGED_KEY": "same-value",
+		"CHANGED_KEY":   "old-value",
+	}
+
+	// Step 1: Encrypt all values (initial save)
+	originalEncrypted, err := EncryptEnvironment(original, recipient)
+	if err != nil {
+		t.Fatalf("EncryptEnvironment() error = %v", err)
+	}
+
+	// Step 2: Decrypt all values (simulating "sse edit" opening the file)
+	originalDecrypted, err := DecryptEnvironment(originalEncrypted, identity)
+	if err != nil {
+		t.Fatalf("DecryptEnvironment() error = %v", err)
+	}
+
+	// Step 3: Simulate user editing — only CHANGED_KEY is modified
+	edited := map[string]string{
+		"UNCHANGED_KEY": "same-value",
+		"CHANGED_KEY":   "new-value",
+	}
+
+	// Step 4: Re-encrypt using the same logic as edit.go — preserve ciphertext for unchanged values
+	reencrypted := make(map[string]string)
+	for key, newPlaintext := range edited {
+		if newPlaintext == originalDecrypted[key] && originalEncrypted[key] != "" {
+			reencrypted[key] = originalEncrypted[key]
+		} else {
+			enc, err := EncryptValue(newPlaintext, recipient)
+			if err != nil {
+				t.Fatalf("EncryptValue(%s) error = %v", key, err)
+			}
+			reencrypted[key] = enc
+		}
+	}
+
+	// Unchanged key should have the exact same ciphertext
+	if reencrypted["UNCHANGED_KEY"] != originalEncrypted["UNCHANGED_KEY"] {
+		t.Error("UNCHANGED_KEY ciphertext should be preserved when plaintext hasn't changed")
+	}
+
+	// Changed key should have different ciphertext
+	if reencrypted["CHANGED_KEY"] == originalEncrypted["CHANGED_KEY"] {
+		t.Error("CHANGED_KEY ciphertext should differ when plaintext has changed")
+	}
+
+	// Both values should still decrypt correctly
+	for key, expectedPlaintext := range edited {
+		decrypted, err := DecryptValue(reencrypted[key], identity)
+		if err != nil {
+			t.Fatalf("DecryptValue(%s) error = %v", key, err)
+		}
+		if decrypted != expectedPlaintext {
+			t.Errorf("decrypted[%s] = %q, want %q", key, decrypted, expectedPlaintext)
+		}
+	}
+}
+
 func TestCreateDefault(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "env.toml")

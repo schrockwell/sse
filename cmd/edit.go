@@ -109,12 +109,25 @@ Examples:
 			return fmt.Errorf("failed to parse edited TOML: %w", err)
 		}
 
-		// Encrypt all values
+		// Encrypt only changed values; preserve original ciphertext for unchanged ones
 		encryptedEnvs := make(map[string]map[string]string)
-		for envName, env := range editedEnvs {
-			encrypted, err := secrets.EncryptEnvironment(env, recipient)
-			if err != nil {
-				return fmt.Errorf("failed to encrypt %s: %w", envName, err)
+		for envName, editedEnv := range editedEnvs {
+			encrypted := make(map[string]string)
+			originalDecrypted := decryptedEnvs[envName]
+			originalEncrypted := f.Environments[envName]
+
+			for key, newPlaintext := range editedEnv {
+				if originalDecrypted != nil && originalEncrypted != nil &&
+					newPlaintext == originalDecrypted[key] && originalEncrypted[key] != "" {
+					// Value unchanged — preserve original ciphertext
+					encrypted[key] = originalEncrypted[key]
+				} else {
+					enc, err := secrets.EncryptValue(newPlaintext, recipient)
+					if err != nil {
+						return fmt.Errorf("failed to encrypt %s.%s: %w", envName, key, err)
+					}
+					encrypted[key] = enc
+				}
 			}
 			encryptedEnvs[envName] = encrypted
 		}
