@@ -27,7 +27,7 @@ Only the private key is needed for decryption, so for deployments you can set `S
 #### .envrc
 
 ```sh
-eval "$(sse load)"
+eval "$(sse export)"
 ```
 
 ## Example: Docker Deployment with Kamal
@@ -49,7 +49,7 @@ CMD ["/app/bin/server"]
 
 ```bash
 #! /bin/bash
-eval "$(sse load production)"
+eval "$(sse export production)"
 exec "$@"
 ```
 
@@ -127,9 +127,9 @@ Usage:
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
   edit        Edit env.toml
+  export      Print variables in export format for shell eval
   help        Help about any command
   init        Initialize a new project
-  load        Export variables to current shell
   private     Print the private key from master.key
   public      Print the public key from master.key
   show        Print decrypted env.toml
