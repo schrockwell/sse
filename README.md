@@ -126,6 +126,7 @@ Usage:
 
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
+  dotenv      Print variables in dotenv format
   edit        Edit env.toml
   export      Print variables in export format for shell eval
   help        Help about any command
